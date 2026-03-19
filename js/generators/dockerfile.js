@@ -30,6 +30,7 @@ function generateDockerfile(config) {
   const pathParts = ['$PATH'];
   if (config.languages.includes('go')) pathParts.push('/usr/local/go/bin', '/root/go/bin');
   pathParts.push('/root/.local/bin');
+  if (config.languages.includes('rust')) pathParts.push('/root/.cargo/bin');
   envVars.push(`PATH=${pathParts.join(':')}`);
   lines.push('ENV ' + envVars.join(' \\\n    '));
   lines.push('');

@@ -4,7 +4,7 @@ ENV LANG=C.UTF-8 \
     LANGUAGE=C.UTF-8 \
     GOLANG_VERSION=1.23.6 \
     GOPATH=/root/go \
-    PATH=$PATH:/usr/local/go/bin:/root/go/bin:/root/.local/bin
+    PATH=$PATH:/usr/local/go/bin:/root/go/bin:/root/.local/bin:/root/.cargo/bin
 
 # 层1: 系统包 + 基础工具
 RUN apt-get update \
