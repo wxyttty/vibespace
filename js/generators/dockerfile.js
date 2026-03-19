@@ -43,13 +43,46 @@ function generateDockerfile(config) {
   const aptPkgs = new Set(['git', 'wget', 'unzip', 'curl', 'ca-certificates', 'openssh-server', 'openssh-client']);
   config.languages.forEach(langId => {
     const lang = DEFAULTS.languages.find(l => l.id === langId);
-    if (lang) lang.aptPkgs.forEach(p => aptPkgs.add(p));
+    if (!lang) return;
+    // 先添加语言定义中的基础 apt 包（make, build-essential, cmake 等）
+    lang.aptPkgs.forEach(p => aptPkgs.add(p));
+    // Java: 根据版本选择 openjdk 包名
+    if (langId === 'java') {
+      const javaVer = config.languageVersions.java || '21';
+      aptPkgs.add(`openjdk-${javaVer}-jdk`);
+    }
+    // C: 根据版本选择 gcc 包名
+    if (langId === 'c') {
+      const cVer = config.languageVersions.c || 'system';
+      aptPkgs.add(cVer === 'system' ? 'gcc' : `gcc-${cVer}`);
+    }
+    // C++: 根据版本选择 g++ 包名
+    if (langId === 'cpp') {
+      const cppVer = config.languageVersions.cpp || 'system';
+      aptPkgs.add(cppVer === 'system' ? 'g++' : `g++-${cppVer}`);
+    }
   });
+  // Python 指定版本时通过 deadsnakes PPA 安装，不走 apt 默认包
+  const pythonVer = config.languageVersions.python || 'system';
+  if (config.languages.includes('python') && pythonVer !== 'system') {
+    aptPkgs.delete('python3');
+    aptPkgs.delete('python3-pip');
+    aptPkgs.add('software-properties-common');
+  }
   layer1.push(`apt-get install -y --no-install-recommends \\\n        ${[...aptPkgs].sort().join(' ')}`);
 
   if (config.needsNodejs) {
-    layer1.push('curl -fsSL https://deb.nodesource.com/setup_20.x | bash -');
+    const nodeVer = config.languageVersions.nodejs || '20';
+    layer1.push(`curl -fsSL https://deb.nodesource.com/setup_${nodeVer}.x | bash -`);
     layer1.push('apt-get install -y --no-install-recommends nodejs');
+  }
+  // Python: 指定版本通过 deadsnakes PPA 安装
+  if (config.languages.includes('python') && pythonVer !== 'system') {
+    layer1.push('add-apt-repository -y ppa:deadsnakes/ppa');
+    layer1.push('apt-get update');
+    layer1.push(`apt-get install -y --no-install-recommends python${pythonVer} python${pythonVer}-distutils`);
+    layer1.push(`update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${pythonVer} 1`);
+    layer1.push('curl -sS https://bootstrap.pypa.io/get-pip.py | python3');
   }
   if (config.languages.includes('python') && isChina) {
     layer1.push(`pip3 config set global.index-url ${mirrors.pip}`);
@@ -72,7 +105,8 @@ function generateDockerfile(config) {
     runtime.push('echo \'source $HOME/.cargo/env\' >> /root/.bashrc');
   }
   if (config.languages.includes('python') && config.pythonVenv) {
-    runtime.push('apt-get update && apt-get install -y --no-install-recommends python3-venv && apt-get clean && rm -rf /var/lib/apt/lists/*');
+    const pyVenvPkg = pythonVer !== 'system' ? `python${pythonVer}-venv` : 'python3-venv';
+    runtime.push(`apt-get update && apt-get install -y --no-install-recommends ${pyVenvPkg} && apt-get clean && rm -rf /var/lib/apt/lists/*`);
   }
   if (runtime.length) {
     lines.push('# 层2: 语言运行时');

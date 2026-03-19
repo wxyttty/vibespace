@@ -27,12 +27,27 @@ function generateCompose(config) {
 
   // 环境变量
   lines.push('    environment:');
-  lines.push('      - ROOT_PASSWORD=${ROOT_PASSWORD:-root123}');
+  lines.push(`      - ROOT_PASSWORD=${config.rootPassword || '${ROOT_PASSWORD:-root123}'}`);
   lines.push('      - GIT_USER_NAME=${GIT_USER_NAME:-}');
   lines.push('      - GIT_USER_EMAIL=${GIT_USER_EMAIL:-}');
-  lines.push('      - SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY:-}');
-  lines.push('      - SSH_PUBLIC_KEY=${SSH_PUBLIC_KEY:-}');
-  if (config.codeServer) lines.push('      - CS_PASSWORD=${CS_PASSWORD:-}');
+  if (config.sshPrivateKey) {
+    const escaped = config.sshPrivateKey.replace(/\n/g, '\\n');
+    lines.push(`      - SSH_PRIVATE_KEY=${escaped}`);
+  } else {
+    lines.push('      - SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY:-}');
+  }
+  if (config.sshPublicKey) {
+    lines.push(`      - SSH_PUBLIC_KEY=${config.sshPublicKey}`);
+  } else {
+    lines.push('      - SSH_PUBLIC_KEY=${SSH_PUBLIC_KEY:-}');
+  }
+  if (config.codeServer) {
+    if (config.csPassword) {
+      lines.push(`      - CS_PASSWORD=${config.csPassword}`);
+    } else {
+      lines.push('      - CS_PASSWORD=${CS_PASSWORD:-}');
+    }
+  }
   if (config.cfTunnel) lines.push('      - CF_TUNNEL_TOKEN=${CF_TUNNEL_TOKEN:-}');
 
   // 命名卷声明（仅卷挂载模式需要）

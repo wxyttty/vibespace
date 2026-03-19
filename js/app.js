@@ -3,21 +3,19 @@
 function appState() {
   return {
     currentStep: 1,
-    totalSteps: 7,
+    totalSteps: 6,
     steps: [
       { num: 1, title: '宿主机地区', icon: '🌏' },
-      { num: 2, title: '基础镜像', icon: '📦' },
-      { num: 3, title: 'Code-Server', icon: '💻' },
-      { num: 4, title: '编程语言', icon: '🛠️' },
-      { num: 5, title: 'AI 工具', icon: '🤖' },
-      { num: 6, title: '其他工具', icon: '🔧' },
-      { num: 7, title: '自定义层', icon: '📝' },
+      { num: 2, title: 'Code-Server', icon: '💻' },
+      { num: 3, title: '编程语言', icon: '🛠️' },
+      { num: 4, title: 'AI 工具', icon: '🤖' },
+      { num: 5, title: '其他工具', icon: '🔧' },
+      { num: 6, title: '自定义层', icon: '📝' },
     ],
     outputTab: 'dockerfile',
 
     /* 配置状态 */
     region: 'china',
-    baseImage: 'ubuntu:24.04',
     codeServer: true,
     extensions: DEFAULTS.codeServerExtensions.filter(e => e.checked).map(e => e.id),
     customExtensions: '',
@@ -26,6 +24,16 @@ function appState() {
     pythonVenv: true,
     aiTools: [],
     aiToolVersions: {},
+    claudeMcpServers: [],  // [{name: 'my-server', json: '{"type":"http","url":"..."}', jsonValid: true}]
+
+    /* Claude Code 工作流和输出样式 */
+    claudeWorkflows: [],      // 已选中的工作流 ID 数组
+    claudeOutputStyle: '',    // 已选中的输出样式 ID
+    claudeDisableTelemetry: false, // 禁止遥测与更新
+    rootPassword: '',
+    csPassword: '',
+    sshPrivateKey: '',
+    sshPublicKey: '',
     cfTunnel: false,
     cfToken: '',
     vibeCommand: false,
@@ -44,9 +52,11 @@ function appState() {
     init() {
       this.applyPreset('default');
       const watched = [
-        'region', 'baseImage', 'codeServer', 'extensions', 'customExtensions',
+        'region', 'codeServer', 'extensions', 'customExtensions',
         'languages', 'languageVersions', 'pythonVenv',
-        'aiTools', 'aiToolVersions',
+        'aiTools', 'aiToolVersions', 'claudeMcpServers',
+        'claudeWorkflows', 'claudeOutputStyle', 'claudeDisableTelemetry',
+        'rootPassword', 'csPassword', 'sshPrivateKey', 'sshPublicKey',
         'cfTunnel', 'cfToken', 'vibeCommand', 'vibeCommandText',
         'volumeMode', 'customDockerfile',
       ];
@@ -60,8 +70,7 @@ function appState() {
 
     isStepCompleted(step) {
       if (step === 1) return !!this.region;
-      if (step === 2) return !!this.baseImage;
-      return true; // 步骤 3-7 无必填项
+      return true; // 步骤 2-6 无必填项
     },
 
     /* 多选 toggle 系列 */
@@ -88,9 +97,76 @@ function appState() {
 
     toggleAiTool(toolId) {
       const idx = this.aiTools.indexOf(toolId);
-      idx >= 0 ? this.aiTools.splice(idx, 1) : this.aiTools.push(toolId);
+      if (idx >= 0) {
+        this.aiTools.splice(idx, 1);
+        // 取消选中 claude-code 时清空 MCP、工作流、输出样式和遥测配置
+        if (toolId === 'claude-code') {
+          this.claudeMcpServers = [];
+          this.claudeWorkflows = [];
+          this.claudeOutputStyle = '';
+          this.claudeDisableTelemetry = false;
+          // 同时取消依赖 claude-code 的工具
+          this.aiTools = this.aiTools.filter(id => {
+            const t = DEFAULTS.aiTools.find(a => a.id === id);
+            return !t || t.requiresTool !== 'claude-code';
+          });
+        }
+      } else {
+        this.aiTools.push(toolId);
+        // 首次选中 claude-code 时初始化默认工作流
+        if (toolId === 'claude-code' && this.claudeWorkflows.length === 0) {
+          this.claudeWorkflows = DEFAULTS.claudeWorkflows.filter(w => w.defaultSelected).map(w => w.id);
+          this.claudeOutputStyle = 'default';
+        }
+      }
     },
     hasAiTool(toolId) { return this.aiTools.includes(toolId); },
+
+    /* Claude Code 工作流管理 */
+    toggleClaudeWorkflow(workflowId) {
+      const idx = this.claudeWorkflows.indexOf(workflowId);
+      if (idx >= 0) {
+        this.claudeWorkflows.splice(idx, 1);
+      } else {
+        this.claudeWorkflows.push(workflowId);
+      }
+    },
+    hasClaudeWorkflow(workflowId) { return this.claudeWorkflows.includes(workflowId); },
+
+    /* Claude MCP 管理 */
+    addMcpServer() {
+      this.claudeMcpServers.push({ name: '', json: '', jsonValid: true });
+    },
+    removeMcpServer(index) {
+      this.claudeMcpServers.splice(index, 1);
+    },
+    validateMcpJson(idx) {
+      const mcp = this.claudeMcpServers[idx];
+      if (!mcp.json.trim()) {
+        mcp.jsonValid = true;
+        return;
+      }
+      try {
+        JSON.parse(mcp.json);
+        mcp.jsonValid = true;
+      } catch {
+        mcp.jsonValid = false;
+      }
+    },
+    hasMcpPreset(presetId) {
+      return this.claudeMcpServers.some(s => s.name === presetId);
+    },
+    toggleMcpPreset(preset) {
+      const idx = this.claudeMcpServers.findIndex(s => s.name === preset.name);
+      if (idx >= 0) {
+        this.claudeMcpServers.splice(idx, 1);
+      } else {
+        this.claudeMcpServers.push({ name: preset.name, json: preset.json, jsonValid: true });
+      }
+    },
+    hasMcpJsonError() {
+      return this.claudeMcpServers.some(s => s.jsonValid === false);
+    },
 
     /** AI 工具依赖 Node.js */
     needsNodejs() {
@@ -113,7 +189,6 @@ function appState() {
       if (!p) return;
       this.currentPreset = presetId;
       this.region = p.region;
-      this.baseImage = p.baseImage;
       this.codeServer = p.codeServer;
       this.extensions = [...p.extensions];
       this.customExtensions = p.customExtensions;
@@ -122,6 +197,14 @@ function appState() {
       this.pythonVenv = p.pythonVenv;
       this.aiTools = [...p.aiTools];
       this.aiToolVersions = { ...p.aiToolVersions };
+      this.claudeMcpServers = p.claudeMcpServers ? p.claudeMcpServers.map(s => ({...s})) : [];
+      this.claudeWorkflows = p.claudeWorkflows ? [...p.claudeWorkflows] : [];
+      this.claudeOutputStyle = p.claudeOutputStyle || '';
+      this.claudeDisableTelemetry = p.claudeDisableTelemetry || false;
+      this.rootPassword = p.rootPassword || '';
+      this.csPassword = p.csPassword || '';
+      this.sshPrivateKey = p.sshPrivateKey || '';
+      this.sshPublicKey = p.sshPublicKey || '';
       this.cfTunnel = p.cfTunnel;
       this.cfToken = p.cfToken;
       this.vibeCommand = p.vibeCommand;
@@ -144,10 +227,14 @@ function appState() {
     /** 收集当前 UI 状态为生成器配置对象 */
     getConfig() {
       return {
-        region: this.region, baseImage: this.baseImage,
+        region: this.region, baseImage: DEFAULTS.baseImage,
         codeServer: this.codeServer, extensions: this.extensions, customExtensions: this.customExtensions,
         languages: this.languages, languageVersions: this.languageVersions, pythonVenv: this.pythonVenv,
-        aiTools: this.aiTools, aiToolVersions: this.aiToolVersions,
+        aiTools: this.aiTools, aiToolVersions: this.aiToolVersions, claudeMcpServers: this.claudeMcpServers,
+        claudeWorkflows: this.claudeWorkflows, claudeOutputStyle: this.claudeOutputStyle,
+        claudeDisableTelemetry: this.claudeDisableTelemetry,
+        rootPassword: this.rootPassword, csPassword: this.csPassword,
+        sshPrivateKey: this.sshPrivateKey, sshPublicKey: this.sshPublicKey,
         cfTunnel: this.cfTunnel, cfToken: this.cfToken,
         vibeCommand: this.vibeCommand, vibeCommandText: this.vibeCommandText,
         volumeMode: this.volumeMode,

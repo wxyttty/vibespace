@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DIY Vibe Space - 容器化开发环境生成器</title>
+  <title>DIY Vibe Space - 容器化Vibe环境生成器</title>
 
   <!-- CDN 依赖 -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -103,8 +103,8 @@
       <!-- 输出入口 -->
       <div class="mt-6 pt-4 border-t border-gray-800">
         <button
-          @click="currentStep = 8"
-          :class="currentStep === 8 ? 'bg-blue-600/20 text-blue-400 border-blue-600' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border-gray-700'"
+          @click="currentStep = 7"
+          :class="currentStep === 7 ? 'bg-blue-600/20 text-blue-400 border-blue-600' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border-gray-700'"
           class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm border transition-all"
         >
           <span>📄</span>
@@ -168,33 +168,8 @@
         </div>
       </div>
 
-      <!-- 步骤 2: 基础镜像 -->
+      <!-- 步骤 2: Code-Server -->
       <div x-show="currentStep === 2" x-transition class="fade-in">
-        <h2 class="text-xl font-bold mb-2">📦 基础镜像</h2>
-        <p class="text-gray-500 text-sm mb-6">选择 Docker 基础镜像</p>
-
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl">
-          <template x-for="img in DEFAULTS.baseImages" :key="img.id">
-            <button
-              @click="baseImage = img.value"
-              :class="baseImage === img.value ? 'selected' : ''"
-              class="card-option border-2 border-gray-700 rounded-xl p-4 text-center"
-            >
-              <div class="text-2xl mb-2">🐧</div>
-              <h3 class="text-sm font-bold" x-text="img.label"></h3>
-              <p class="text-gray-500 text-xs mt-1" x-text="img.desc"></p>
-            </button>
-          </template>
-        </div>
-
-        <div class="mt-8 flex justify-between">
-          <button @click="prevStep()" class="text-gray-400 hover:text-white px-4 py-2 rounded-lg text-sm">← 上一步</button>
-          <button @click="nextStep()" class="btn-primary bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium">下一步 →</button>
-        </div>
-      </div>
-
-      <!-- 步骤 3: Code-Server -->
-      <div x-show="currentStep === 3" x-transition class="fade-in">
         <h2 class="text-xl font-bold mb-2">💻 Code-Server</h2>
         <p class="text-gray-500 text-sm mb-6">在浏览器中使用 VS Code 编辑器</p>
 
@@ -218,6 +193,50 @@
               <span class="text-yellow-400">⚠️</span>
               <p class="text-yellow-300 text-sm">Code-Server 扩展与 VS Code 扩展不通用，部分扩展可能无法使用</p>
             </div>
+          </div>
+
+          <!-- Code-Server 密码 -->
+          <div class="mb-6 max-w-2xl">
+            <h3 class="text-sm font-medium text-gray-300 mb-2">Code-Server 访问密码</h3>
+            <input
+              type="text"
+              x-model="csPassword"
+              placeholder="留空则免密访问"
+              class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:border-blue-500 outline-none"
+            >
+            <p class="text-xs text-gray-600 mt-1" x-text="csPassword ? '将写入 docker-compose.yml 环境变量' : '未设置密码，Code-Server 将免密访问'"></p>
+          </div>
+
+          <!-- SSH 密码 -->
+          <div class="mb-6 max-w-2xl">
+            <h3 class="text-sm font-medium text-gray-300 mb-2">SSH root 密码</h3>
+            <input
+              type="text"
+              x-model="rootPassword"
+              placeholder="默认: root123"
+              class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:border-blue-500 outline-none"
+            >
+            <p class="text-xs text-gray-600 mt-1">SSH 登录密码，留空则使用默认密码 root123</p>
+          </div>
+
+          <!-- SSH 密钥 -->
+          <div class="mb-6 max-w-2xl">
+            <h3 class="text-sm font-medium text-gray-300 mb-2">SSH 密钥 <span class="text-gray-600 font-normal">(可选)</span></h3>
+            <label class="text-xs text-gray-400 block mb-1">私钥</label>
+            <textarea
+              x-model="sshPrivateKey"
+              placeholder="粘贴 SSH 私钥内容，用于 Git 等操作..."
+              class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm text-gray-300 placeholder-gray-600 focus:border-blue-500 outline-none resize-y font-mono"
+              rows="3"
+            ></textarea>
+            <label class="text-xs text-gray-400 block mb-1 mt-2">公钥</label>
+            <input
+              type="text"
+              x-model="sshPublicKey"
+              placeholder="ssh-rsa AAAA... (可选)"
+              class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:border-blue-500 outline-none font-mono"
+            >
+            <p class="text-xs text-gray-600 mt-1">密钥将写入 docker-compose.yml 环境变量，容器启动时自动配置到 ~/.ssh/</p>
           </div>
 
           <!-- 扩展列表 -->
@@ -250,8 +269,42 @@
         </div>
 
         <!-- 未启用时 -->
-        <div x-show="!codeServer" class="bg-gray-900 border border-gray-800 rounded-lg p-4 max-w-2xl">
-          <p class="text-gray-500 text-sm">将仅暴露 SSH 端口 (22)，通过 SSH 连接使用</p>
+        <div x-show="!codeServer" x-transition class="space-y-4 max-w-2xl">
+          <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+            <p class="text-gray-500 text-sm">将仅暴露 SSH 端口 (22)，通过 SSH 连接使用</p>
+          </div>
+
+          <!-- SSH 密码 -->
+          <div>
+            <h3 class="text-sm font-medium text-gray-300 mb-2">SSH root 密码</h3>
+            <input
+              type="text"
+              x-model="rootPassword"
+              placeholder="默认: root123"
+              class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:border-blue-500 outline-none"
+            >
+            <p class="text-xs text-gray-600 mt-1">SSH 登录密码，留空则使用默认密码 root123</p>
+          </div>
+
+          <!-- SSH 密钥 -->
+          <div>
+            <h3 class="text-sm font-medium text-gray-300 mb-2">SSH 密钥 <span class="text-gray-600 font-normal">(可选)</span></h3>
+            <label class="text-xs text-gray-400 block mb-1">私钥</label>
+            <textarea
+              x-model="sshPrivateKey"
+              placeholder="粘贴 SSH 私钥内容，用于 Git 等操作..."
+              class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm text-gray-300 placeholder-gray-600 focus:border-blue-500 outline-none resize-y font-mono"
+              rows="3"
+            ></textarea>
+            <label class="text-xs text-gray-400 block mb-1 mt-2">公钥</label>
+            <input
+              type="text"
+              x-model="sshPublicKey"
+              placeholder="ssh-rsa AAAA... (可选)"
+              class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:border-blue-500 outline-none font-mono"
+            >
+            <p class="text-xs text-gray-600 mt-1">密钥将写入 docker-compose.yml 环境变量，容器启动时自动配置到 ~/.ssh/</p>
+          </div>
         </div>
 
         <div class="mt-8 flex justify-between">
@@ -260,8 +313,8 @@
         </div>
       </div>
 
-      <!-- 步骤 4: 编程语言 -->
-      <div x-show="currentStep === 4" x-transition class="fade-in">
+      <!-- 步骤 3: 编程语言 -->
+      <div x-show="currentStep === 3" x-transition class="fade-in">
         <h2 class="text-xl font-bold mb-2">🛠️ 编程语言</h2>
         <p class="text-gray-500 text-sm mb-6">选择需要安装的编程语言环境（可多选）。仅包含语言运行时，不含常用框架。</p>
 
@@ -285,26 +338,46 @@
           </template>
         </div>
 
-        <!-- Go 版本 -->
-        <div x-show="hasLanguage('go')" x-transition class="mt-4 max-w-md">
-          <label class="text-sm text-gray-400 block mb-1">Go 版本</label>
-          <select
-            x-model="languageVersions.go"
-            class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 w-full focus:border-blue-500 outline-none"
-          >
-            <template x-for="ver in DEFAULTS.languages.find(l => l.id === 'go').versions" :key="ver">
-              <option :value="ver" x-text="'Go ' + ver"></option>
+        <!-- 语言版本选择（通用组件：遍历所有已选中且支持版本选择的语言） -->
+        <template x-for="lang in DEFAULTS.languages.filter(l => l.hasVersion && hasLanguage(l.id))" :key="lang.id + '-version'">
+          <div x-transition class="mt-4 max-w-md">
+            <label class="text-sm text-gray-400 block mb-1" x-text="lang.label + ' 版本'"></label>
+            <div class="flex gap-2 items-center">
+              <select
+                :value="languageVersions[lang.id] || lang.defaultVersion"
+                @change="languageVersions[lang.id] = $event.target.value"
+                class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-blue-500 outline-none"
+              >
+                <template x-for="ver in lang.versions" :key="lang.id + '-' + ver">
+                  <option :value="ver" x-text="ver === 'system' ? '系统默认' : lang.label.split(' ')[0] + ' ' + ver"></option>
+                </template>
+              </select>
+              <!-- 自定义版本输入 -->
+              <input
+                type="text"
+                :value="lang.versions.includes(languageVersions[lang.id] || lang.defaultVersion) ? '' : (languageVersions[lang.id] || '')"
+                @input="if($event.target.value.trim()) languageVersions[lang.id] = $event.target.value.trim()"
+                placeholder="自定义版本号"
+                class="w-36 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:border-blue-500 outline-none"
+              >
+            </div>
+            <!-- 安装方式说明 -->
+            <p x-show="lang.installNote" class="text-xs text-gray-500 mt-1.5" x-text="'安装方式: ' + lang.installNote"></p>
+            <!-- Python 特有: venv 选项 -->
+            <template x-if="lang.id === 'python'">
+              <label class="flex items-center gap-2 text-sm cursor-pointer mt-2">
+                <input type="checkbox" x-model="pythonVenv" class="rounded border-gray-600 text-blue-600 bg-gray-800">
+                <span class="text-gray-300">安装 python3-venv (虚拟环境支持)</span>
+              </label>
             </template>
-          </select>
-        </div>
-
-        <!-- Python venv -->
-        <div x-show="hasLanguage('python')" x-transition class="mt-4 max-w-md">
-          <label class="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" x-model="pythonVenv" class="rounded border-gray-600 text-blue-600 bg-gray-800">
-            <span class="text-gray-300">安装 python3-venv (虚拟环境支持)</span>
-          </label>
-        </div>
+            <!-- 用户自行确保提示 -->
+            <div class="bg-yellow-950/20 border border-yellow-800/30 rounded-lg p-2 mt-2">
+              <p class="text-xs text-yellow-300/80 flex items-center gap-1">
+                <span>⚠️</span> 请自行确认所选版本号正确且可用，错误的版本号将导致构建失败
+              </p>
+            </div>
+          </div>
+        </template>
 
         <!-- Node.js 自动依赖提示 -->
         <div x-show="aiTools.length > 0 && !hasLanguage('nodejs')" x-transition class="mt-4 max-w-2xl">
@@ -319,14 +392,16 @@
         </div>
       </div>
 
-      <!-- 步骤 5: AI 工具 -->
-      <div x-show="currentStep === 5" x-transition class="fade-in">
+      <!-- 步骤 4: AI 工具 -->
+      <div x-show="currentStep === 4" x-transition class="fade-in">
         <h2 class="text-xl font-bold mb-2">🤖 AI 工具</h2>
         <p class="text-gray-500 text-sm mb-6">选择需要安装的 AI 辅助开发工具</p>
 
         <div class="space-y-3 max-w-2xl">
           <template x-for="tool in DEFAULTS.aiTools" :key="tool.id">
             <div
+              x-show="!tool.requiresTool || hasAiTool(tool.requiresTool)"
+              x-transition
               @click="toggleAiTool(tool.id)"
               :class="hasAiTool(tool.id) ? 'border-blue-600 bg-blue-950/20' : 'border-gray-700'"
               class="card-option border-2 rounded-xl p-4 cursor-pointer"
@@ -343,19 +418,154 @@
                 </div>
               </div>
 
-              <!-- 版本输入 -->
+              <!-- 版本输入 + 禁止遥测 -->
               <div x-show="tool.hasVersion && hasAiTool(tool.id)" x-transition @click.stop class="mt-3 pt-3 border-t border-gray-700">
-                <label class="text-xs text-gray-400 block mb-1">版本</label>
-                <input
-                  type="text"
-                  :value="aiToolVersions[tool.id] || tool.defaultVersion"
-                  @input="aiToolVersions[tool.id] = $event.target.value"
-                  class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-300 w-40 focus:border-blue-500 outline-none"
-                  placeholder="latest"
-                >
+                <div class="flex items-end gap-4">
+                  <div>
+                    <label class="text-xs text-gray-400 block mb-1">版本</label>
+                    <input
+                      type="text"
+                      :value="aiToolVersions[tool.id] || tool.defaultVersion"
+                      @input="aiToolVersions[tool.id] = $event.target.value"
+                      class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-gray-300 w-40 focus:border-blue-500 outline-none"
+                      placeholder="latest"
+                    >
+                  </div>
+                  <div x-show="tool.id === 'claude-code'">
+                    <label class="flex items-center gap-2 cursor-pointer text-xs px-3 py-1.5 rounded-lg border transition-all"
+                      :class="claudeDisableTelemetry ? 'border-blue-600 bg-blue-950/20 text-blue-300' : 'border-gray-700 text-gray-400 hover:border-gray-600'"
+                    >
+                      <input
+                        type="checkbox"
+                        x-model="claudeDisableTelemetry"
+                        class="rounded border-gray-600 text-blue-600 bg-gray-800 focus:ring-blue-500"
+                      >
+                      <span>禁止遥测与更新</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Claude MCP 配置 -->
+              <div x-show="tool.hasMcp && hasAiTool(tool.id)" x-transition @click.stop class="mt-3 pt-3 border-t border-gray-700">
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-xs text-gray-400">MCP Server 配置</label>
+                  <button
+                    @click="addMcpServer()"
+                    class="text-xs text-blue-400 hover:text-blue-300 px-2 py-0.5 border border-blue-700 rounded hover:bg-blue-950/30"
+                  >+ 添加 MCP</button>
+                </div>
+
+                <!-- MCP 预设快捷按钮 -->
+                <div class="flex flex-wrap gap-2 mb-3">
+                  <template x-for="preset in DEFAULTS.mcpPresets" :key="preset.id">
+                    <button
+                      @click="toggleMcpPreset(preset)"
+                      :class="hasMcpPreset(preset.id) ? 'border-blue-600 bg-blue-950/30 text-blue-300' : 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300'"
+                      class="flex items-center gap-1.5 px-2.5 py-1 border rounded-lg text-xs transition-all"
+                    >
+                      <span x-show="hasMcpPreset(preset.id)" class="text-blue-400">&#10003;</span>
+                      <span x-text="preset.label"></span>
+                      <span class="text-gray-600" x-text="'- ' + preset.desc"></span>
+                    </button>
+                  </template>
+                </div>
+
+                <template x-for="(mcp, idx) in claudeMcpServers" :key="idx">
+                  <div class="mb-2">
+                    <div class="flex gap-2 items-start">
+                      <input
+                        type="text"
+                        x-model="claudeMcpServers[idx].name"
+                        placeholder="名称，如 my-server"
+                        class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-300 w-32 focus:border-blue-500 outline-none flex-shrink-0"
+                      >
+                      <input
+                        type="text"
+                        x-model="claudeMcpServers[idx].json"
+                        @input="validateMcpJson(idx)"
+                        @blur="validateMcpJson(idx)"
+                        placeholder='{"command":"npx","args":["-y","pkg@latest"]}'
+                        :class="claudeMcpServers[idx].jsonValid === false ? 'border-red-500 focus:border-red-400' : 'border-gray-700 focus:border-blue-500'"
+                        class="bg-gray-800 border rounded px-2 py-1 text-xs text-gray-300 flex-1 outline-none font-mono"
+                      >
+                      <button
+                        @click="removeMcpServer(idx)"
+                        class="text-gray-500 hover:text-red-400 px-1 py-1 text-xs flex-shrink-0"
+                        title="删除"
+                      >✕</button>
+                    </div>
+                    <p x-show="claudeMcpServers[idx].jsonValid === false" class="text-xs text-red-400 mt-1 ml-34">JSON 格式不正确，请检查语法</p>
+                  </div>
+                </template>
+                <div x-show="claudeMcpServers.length === 0" class="text-xs text-gray-600">
+                  选择上方预设或点击「+ 添加 MCP」手动配置，将在容器启动时自动执行 <code class="bg-gray-800 px-1 rounded">claude mcp add-json</code>
+                </div>
+                <div x-show="claudeMcpServers.length > 0" class="mt-1">
+                  <p class="text-xs text-gray-600">JSON 格式: <code class="bg-gray-800 px-1 rounded text-gray-400">{"command":"npx","args":["-y","pkg@latest"]}</code> 或 <code class="bg-gray-800 px-1 rounded text-gray-400">{"type":"http","url":"https://..."}</code></p>
+                </div>
+                <div x-show="hasMcpJsonError()" class="mt-2 bg-red-950/30 border border-red-800/50 rounded-lg p-2">
+                  <p class="text-xs text-red-300 flex items-center gap-1"><span>&#9888;</span> 存在 JSON 格式错误，生成的配置可能无法正常工作</p>
+                </div>
               </div>
             </div>
           </template>
+        </div>
+
+        <!-- Claude Code 工作流和输出样式选择 -->
+        <div x-show="hasAiTool('claude-code')" x-transition class="mt-6 max-w-2xl space-y-4">
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+            <h3 class="text-sm font-bold mb-3 flex items-center gap-2">
+              <span>🔄</span> 预设工作流
+              <span class="text-xs text-gray-500 font-normal">选择要安装的工作流命令</span>
+            </h3>
+            <p class="text-xs text-gray-500 mb-3">ZCF 工作流将安装到 ~/.claude/commands/zcf/ 目录，通过 /zcf:命令名 调用</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <template x-for="workflow in DEFAULTS.claudeWorkflows" :key="workflow.id">
+                <label
+                  class="flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer text-sm transition-all"
+                  :class="hasClaudeWorkflow(workflow.id) ? 'border-blue-600 bg-blue-950/20' : 'border-gray-700 hover:border-gray-600'"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="hasClaudeWorkflow(workflow.id)"
+                    @change="toggleClaudeWorkflow(workflow.id)"
+                    class="rounded border-gray-600 text-blue-600 bg-gray-800 focus:ring-blue-500 mt-0.5"
+                  >
+                  <div class="flex-1">
+                    <span class="font-medium" :class="hasClaudeWorkflow(workflow.id) ? 'text-white' : 'text-gray-300'" x-text="workflow.label"></span>
+                    <p class="text-xs text-gray-500 mt-0.5" x-text="workflow.desc"></p>
+                  </div>
+                </label>
+              </template>
+            </div>
+          </div>
+
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+            <h3 class="text-sm font-bold mb-3 flex items-center gap-2">
+              <span>🎨</span> 输出样式
+              <span class="text-xs text-gray-500 font-normal">选择 Claude 的响应风格</span>
+            </h3>
+            <p class="text-xs text-gray-500 mb-3">输出样式将配置到 ~/.claude/settings.json 的 outputStyle 字段</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <template x-for="style in DEFAULTS.claudeOutputStyles" :key="style.id">
+                <button
+                  @click="claudeOutputStyle = style.id"
+                  :class="claudeOutputStyle === style.id ? 'border-blue-600 bg-blue-950/20' : 'border-gray-700 hover:border-gray-600'"
+                  class="flex items-start gap-2 p-2.5 rounded-lg border text-left transition-all"
+                >
+                  <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5"
+                    :class="claudeOutputStyle === style.id ? 'border-blue-600 bg-blue-600' : 'border-gray-600'">
+                    <div x-show="claudeOutputStyle === style.id" class="w-2 h-2 bg-white rounded-full"></div>
+                  </div>
+                  <div class="flex-1">
+                    <span class="font-medium" :class="claudeOutputStyle === style.id ? 'text-white' : 'text-gray-300'" x-text="style.label"></span>
+                    <p class="text-xs text-gray-500 mt-0.5" x-text="style.desc"></p>
+                  </div>
+                </button>
+              </template>
+            </div>
+          </div>
         </div>
 
         <!-- npm 自动依赖提示 -->
@@ -373,8 +583,8 @@
         </div>
       </div>
 
-      <!-- 步骤 6: 其他工具 -->
-      <div x-show="currentStep === 6" x-transition class="fade-in">
+      <!-- 步骤 5: 其他工具 -->
+      <div x-show="currentStep === 5" x-transition class="fade-in">
         <h2 class="text-xl font-bold mb-2">🔧 其他工具</h2>
         <p class="text-gray-500 text-sm mb-6">配置额外的工具和快捷命令</p>
 
@@ -463,8 +673,8 @@
         </div>
       </div>
 
-      <!-- 步骤 7: 自定义层 -->
-      <div x-show="currentStep === 7" x-transition class="fade-in">
+      <!-- 步骤 6: 自定义层 -->
+      <div x-show="currentStep === 6" x-transition class="fade-in">
         <h2 class="text-xl font-bold mb-2">📝 Dockerfile 自定义层</h2>
         <p class="text-gray-500 text-sm mb-6">在 AI 工具层之后、SSH 配置层之前，追加自定义的 Dockerfile 指令</p>
 
@@ -501,14 +711,14 @@ ENV MY_APP_ENV=production</code></pre>
 
         <div class="mt-8 flex justify-between">
           <button @click="prevStep()" class="text-gray-400 hover:text-white px-4 py-2 rounded-lg text-sm">← 上一步</button>
-          <button @click="currentStep = 8; generate()" class="btn-primary bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-medium">
+          <button @click="currentStep = 7; generate()" class="btn-primary bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-medium">
             生成配置 ✨
           </button>
         </div>
       </div>
 
       <!-- 输出面板 -->
-      <div x-show="currentStep === 8" x-transition class="fade-in">
+      <div x-show="currentStep === 7" x-transition class="fade-in">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-bold">📄 生成结果</h2>
           <button
