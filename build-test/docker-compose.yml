@@ -1,0 +1,25 @@
+services:
+  devbox:
+    build: .
+    container_name: devbox
+    restart: unless-stopped
+    ports:
+      - "22:22"
+      - "8080:8080"
+    volumes:
+      - workspace:/workspace
+      - root-data:/root
+    environment:
+      - ROOT_PASSWORD=${ROOT_PASSWORD:-root123}
+      - GIT_USER_NAME=${GIT_USER_NAME:-}
+      - GIT_USER_EMAIL=${GIT_USER_EMAIL:-}
+      - SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY:-}
+      - SSH_PUBLIC_KEY=${SSH_PUBLIC_KEY:-}
+      - CS_PASSWORD=${CS_PASSWORD:-}
+      - CF_TUNNEL_TOKEN=${CF_TUNNEL_TOKEN:-}
+
+volumes:
+  workspace:
+    driver: local
+  root-data:
+    driver: local

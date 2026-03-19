@@ -1,0 +1,63 @@
+/* style.css — 自定义样式 (深色主题) */
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+pre::-webkit-scrollbar-thumb { background: #4b5563; }
+
+/* 步骤导航 */
+.step-item { transition: all 0.2s ease; }
+.step-item:hover { background: rgba(59, 130, 246, 0.1); }
+.step-item.active { background: rgba(59, 130, 246, 0.15); border-left: 3px solid #3b82f6; }
+.step-item.completed .step-dot { background: #10b981; }
+
+/* 可选卡片 */
+.card-option { transition: all 0.2s ease; cursor: pointer; }
+.card-option:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.card-option.selected { border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
+
+/* 开关 */
+.toggle-switch { transition: background-color 0.2s ease; }
+.toggle-switch.active { background-color: #3b82f6; }
+.toggle-dot { transition: transform 0.2s ease; }
+.toggle-switch.active .toggle-dot { transform: translateX(20px); }
+
+/* 展开/收起 */
+.expand-content { overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 0; opacity: 0; }
+.expand-content.open { max-height: 2000px; opacity: 1; }
+
+/* 标签页 */
+.tab-btn { transition: all 0.2s ease; }
+.tab-btn.active { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
+
+/* 代码预览 */
+.code-preview { max-height: 600px; overflow: auto; }
+.code-preview pre { margin: 0; padding: 1rem; font-size: 0.8rem; line-height: 1.5; white-space: pre; word-wrap: normal; }
+
+/* 复制反馈 */
+.copy-btn.copied { color: #10b981 !important; }
+
+/* 徽章 */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+.badge-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.badge-yellow { background: rgba(234, 179, 8, 0.15); color: #facc15; }
+.badge-green { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+
+/* 响应式：移动端进度条 / 桌面端侧边栏 */
+@media (max-width: 768px) { .mobile-progress-bar { display: flex; } .sidebar-nav { display: none; } }
+@media (min-width: 769px) { .mobile-progress-bar { display: none; } }
+
+/* 动画 */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+
+/* 按钮 */
+.btn-primary { transition: all 0.2s ease; }
+.btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+/* 语言卡片 */
+.lang-card { transition: all 0.2s ease; }
+.lang-card:hover { border-color: #4b5563; }
+.lang-card.selected { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }

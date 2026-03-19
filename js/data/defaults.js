@@ -1,0 +1,140 @@
+/** defaults.js — 全局配置常量 */
+
+const DEFAULTS = {
+  /* 基础镜像 */
+  baseImages: [
+    { id: 'ubuntu2404', label: 'Ubuntu 24.04 LTS', value: 'ubuntu:24.04', desc: '最新长期支持版' },
+    { id: 'ubuntu2204', label: 'Ubuntu 22.04 LTS', value: 'ubuntu:22.04', desc: '稳定长期支持版' },
+    { id: 'debian12', label: 'Debian 12', value: 'debian:12', desc: 'Bookworm' },
+    { id: 'debian11', label: 'Debian 11', value: 'debian:11', desc: 'Bullseye' },
+  ],
+
+  /* code-server 扩展 (checked: 预设默认选中) */
+  codeServerExtensions: [
+    { id: 'MS-CEINTL.vscode-language-pack-zh-hans', label: '中文语言包', checked: true },
+    { id: 'GitHub.github-vscode-theme', label: 'GitHub 主题', checked: true },
+    { id: 'DavidAnson.vscode-markdownlint', label: 'Markdown Lint', checked: true },
+    { id: 'golang.go', label: 'Go', checked: false },
+    { id: 'streetsidesoftware.code-spell-checker', label: '拼写检查', checked: false },
+    { id: 'ms-python.python', label: 'Python', checked: false },
+    { id: 'g2developer.browser-in-vscode', label: '内置浏览器', checked: true },
+    { id: 'FittenTech.Fitten-Code', label: 'Fitten Code', checked: false },
+    { id: 'saltcoreyan.json-format-sortcore', label: 'JSON 格式化', checked: true },
+    { id: 'redhat.vscode-yaml', label: 'YAML 支持', checked: true },
+    { id: 'RooVeterinaryInc.roo-cline', label: 'Roo Cline', checked: false },
+    { id: 'Anthropic.claude-code', label: 'Claude Code', checked: false },
+    { id: 'eamodio.gitlens', label: 'GitLens', checked: false },
+  ],
+
+  /* 编程语言 — aptPkgs: 通过 apt 安装; devTools: 额外开发工具 */
+  languages: [
+    {
+      id: 'go', label: 'Go', icon: '🐹',
+      hasVersion: true, defaultVersion: '1.23.6',
+      versions: ['1.24.1', '1.23.6', '1.22.12'],
+      aptPkgs: [],
+      devTools: [
+        { cmd: 'go install -v golang.org/x/tools/gopls@latest', label: 'gopls' },
+        { cmd: 'go install -v github.com/go-delve/delve/cmd/dlv@latest', label: 'dlv' },
+        { cmd: 'go install -v honnef.co/go/tools/cmd/staticcheck@latest', label: 'staticcheck' },
+      ],
+    },
+    { id: 'c', label: 'C', icon: '🔧', hasVersion: false, aptPkgs: ['gcc', 'make', 'build-essential'], devTools: [] },
+    { id: 'cpp', label: 'C++', icon: '⚙️', hasVersion: false, aptPkgs: ['g++', 'make', 'build-essential', 'cmake'], devTools: [] },
+    { id: 'java', label: 'Java', icon: '☕', hasVersion: false, aptPkgs: ['default-jdk'], devTools: [] },
+    { id: 'nodejs', label: 'Node.js / npm', icon: '🟢', hasVersion: false, aptPkgs: [], isNodejs: true, devTools: [] },
+    { id: 'python', label: 'Python', icon: '🐍', hasVersion: false, aptPkgs: ['python3', 'python3-pip'], hasVenv: true, venvDefault: true, devTools: [] },
+    { id: 'rust', label: 'Rust', icon: '🦀', hasVersion: false, aptPkgs: [], devTools: [] },
+  ],
+
+  /* AI 工具 — npmPkg: npm 包名; isScript: 脚本安装 */
+  aiTools: [
+    { id: 'claude-code', label: 'Claude Code', desc: 'Anthropic CLI 开发工具', hasVersion: true, defaultVersion: 'latest', npmPkg: '@anthropic-ai/claude-code' },
+    { id: 'ccline', label: 'CCLine', desc: 'Claude Code 状态行工具', hasVersion: false, npmPkg: '@cometix/ccline' },
+    { id: 'cc-switch', label: 'CC-Switch', desc: 'Claude Code 多账户切换工具', hasVersion: false, isScript: true },
+  ],
+
+  /* 中国镜像源 */
+  chinaMirrors: {
+    dns: 'nameserver 1.1.1.1\nnameserver 114.114.114.114\nnameserver 119.29.29.29',
+    aptScript: 'curl -sSL https://gitee.com/SuperManito/LinuxMirrors/raw/main/ChangeMirrors.sh | bash -s -- --source mirrors.pku.edu.cn --protocol http --use-intranet-source false --backup false --upgrade-software false --clean-cache false --ignore-backup-tips',
+    npm: 'https://registry.npmmirror.com',
+    pip: 'https://pypi.tuna.tsinghua.edu.cn/simple',
+    goProxy: 'https://goproxy.cn,direct',
+    ghProxy: 'https://gh-proxy.org/',
+  },
+
+  /* 工具下载地址 — url: 官方源, mirrorUrl: gh-proxy 镜像 */
+  cloudflared: {
+    url: 'https://github.com/cloudflare/cloudflared/releases/download/2026.3.0/cloudflared-linux-amd64',
+    mirrorUrl: 'https://gh-proxy.org/https://github.com/cloudflare/cloudflared/releases/download/2026.3.0/cloudflared-linux-amd64',
+  },
+  ccSwitch: {
+    url: 'https://github.com/SaladDay/cc-switch-cli/releases/latest/download/install.sh',
+    mirrorUrl: 'https://gh-proxy.org/https://github.com/SaladDay/cc-switch-cli/releases/latest/download/install.sh',
+  },
+
+  vibeDefaultCommand: 'IS_SANDBOX=1 claude --dangerously-skip-permissions',
+
+  /* 预设模板 — 每个预设是一份完整的配置快照 */
+  presets: {
+    default: {
+      label: '默认', desc: 'Node.js + Claude Code',
+      region: 'china', baseImage: 'ubuntu:24.04',
+      codeServer: true,
+      extensions: ['MS-CEINTL.vscode-language-pack-zh-hans', 'GitHub.github-vscode-theme', 'DavidAnson.vscode-markdownlint', 'g2developer.browser-in-vscode', 'saltcoreyan.json-format-sortcore', 'redhat.vscode-yaml', 'Anthropic.claude-code'],
+      customExtensions: '',
+      languages: ['nodejs'], languageVersions: {}, pythonVenv: true,
+      aiTools: ['claude-code'], aiToolVersions: {},
+      cfTunnel: false, cfToken: '', volumeMode: 'named',
+      vibeCommand: true, vibeCommandText: 'IS_SANDBOX=1 claude --dangerously-skip-permissions',
+      customDockerfile: '',
+    },
+    'go-developer': {
+      label: 'Go 开发者', desc: 'Go 语言开发环境',
+      region: 'china', baseImage: 'ubuntu:24.04',
+      codeServer: true,
+      extensions: ['MS-CEINTL.vscode-language-pack-zh-hans', 'GitHub.github-vscode-theme', 'DavidAnson.vscode-markdownlint', 'golang.go', 'g2developer.browser-in-vscode', 'saltcoreyan.json-format-sortcore', 'redhat.vscode-yaml'],
+      customExtensions: '',
+      languages: ['go', 'nodejs'], languageVersions: { go: '1.23.6' }, pythonVenv: false,
+      aiTools: ['claude-code'], aiToolVersions: {},
+      cfTunnel: false, cfToken: '', volumeMode: 'named',
+      vibeCommand: true, vibeCommandText: 'IS_SANDBOX=1 claude --dangerously-skip-permissions',
+      customDockerfile: '',
+    },
+    fullstack: {
+      label: '全栈开发', desc: '多语言全栈环境',
+      region: 'china', baseImage: 'ubuntu:24.04',
+      codeServer: true,
+      extensions: ['MS-CEINTL.vscode-language-pack-zh-hans', 'GitHub.github-vscode-theme', 'DavidAnson.vscode-markdownlint', 'golang.go', 'ms-python.python', 'g2developer.browser-in-vscode', 'saltcoreyan.json-format-sortcore', 'redhat.vscode-yaml', 'Anthropic.claude-code'],
+      customExtensions: '',
+      languages: ['go', 'nodejs', 'python'], languageVersions: { go: '1.23.6' }, pythonVenv: true,
+      aiTools: ['claude-code', 'ccline', 'cc-switch'], aiToolVersions: {},
+      cfTunnel: false, cfToken: '', volumeMode: 'named',
+      vibeCommand: true, vibeCommandText: 'IS_SANDBOX=1 claude --dangerously-skip-permissions',
+      customDockerfile: '',
+    },
+    'ai-heavy': {
+      label: 'AI 全装', desc: '所有 AI 工具',
+      region: 'china', baseImage: 'ubuntu:24.04',
+      codeServer: true,
+      extensions: ['MS-CEINTL.vscode-language-pack-zh-hans', 'GitHub.github-vscode-theme', 'DavidAnson.vscode-markdownlint', 'g2developer.browser-in-vscode', 'saltcoreyan.json-format-sortcore', 'redhat.vscode-yaml', 'RooVeterinaryInc.roo-cline', 'Anthropic.claude-code'],
+      customExtensions: '',
+      languages: ['nodejs'], languageVersions: {}, pythonVenv: false,
+      aiTools: ['claude-code', 'ccline', 'cc-switch'], aiToolVersions: {},
+      cfTunnel: false, cfToken: '', volumeMode: 'named',
+      vibeCommand: true, vibeCommandText: 'IS_SANDBOX=1 claude --dangerously-skip-permissions',
+      customDockerfile: '',
+    },
+    minimal: {
+      label: '最小化', desc: '仅 SSH 基础环境',
+      region: 'international', baseImage: 'ubuntu:24.04',
+      codeServer: false, extensions: [], customExtensions: '',
+      languages: [], languageVersions: {}, pythonVenv: false,
+      aiTools: [], aiToolVersions: {},
+      cfTunnel: false, cfToken: '', volumeMode: 'named',
+      vibeCommand: false, vibeCommandText: '',
+      customDockerfile: '',
+    },
+  },
+};
