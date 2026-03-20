@@ -1,10 +1,10 @@
 # 🚀 Vibe Space
 
-**DIY 容器化 Vibe 环境生成器** — 通过可视化向导配置你的开发技术栈，一键生成生产可用的 Docker 容器化开发环境。
+**VibeSoace** — 通过可视化向导，根据你的开发技术栈，选择配置好Skills，MCP，Agent的AI开发工具，一键生成生产可用的安全的容器化Vibe开发环境，支持ClaudeCode，Roo，不再一直需要“回车以允许” ，无需担心AI工具损坏操作系统，内置工作流（也可自定义），无需再为Skills，MCP等技术的快速更新而困扰，放心的Vibe Coding！
 
 ## 功能特性
 
-- **6 步向导配置** — 地区选择、Code-Server、编程语言、AI 工具、附加工具、自定义层，逐步引导完成配置
+- **向导配置** — 地区选择、Code-Server、编程语言、AI 工具、附加工具、自定义层，逐步引导完成配置
 - **区域感知** — 自动配置国内镜像源（apt / npm / pip / Go / GitHub proxy），解决网络问题
 - **多语言支持** — Go、Node.js、Python、Rust、Java、C、C++，支持版本选择与自定义版本号
 - **AI 工具集成** — Claude Code、CCLine、CC-Switch，支持 MCP Server 配置和 ZCF 工作流预设
@@ -12,16 +12,33 @@
 - **实时预览** — 配置变更即时反映到生成结果，所见即所得
 - **一键导出** — 打包下载 Dockerfile、docker-compose.yml、entrypoint.sh、deploy.sh 四个文件的 ZIP
 
+## 界面预览
+
+![地区选择与镜像源配置](assets/img/readme-preview1.png)
+
+![AI 工具与 MCP Server 配置](assets/img/readme-preview2.png)
+
+![工作流预设与输出样式选择](assets/img/readme-preview3.png)
+
 ## 快速开始
 
-### 使用生成器
+### 使用方法
 
-1. 打开 `index.html`（纯静态页面，无需构建）
-2. 按照 6 步向导选择你的配置
-3. 点击「生成配置」查看预览
-4. 下载 ZIP 包
+通过以下任一方法，进入VibeSpace DIY 页面，根据自己的喜好，选择语言环境，AI工具，Workflow，CC-Switch等工具，生成可一键执行的部署脚本，或部署到CNB ,Github CodeSpace 等
 
-### 部署到服务器
+方法1：使用已部署的在线页面 [点击此处进入 Vibe Space DIY](https://vibespace.xyzen.de/)
+
+方法2： [点此下载本项目压缩包](https://codeload.github.com/XyzenSun/vibespace/zip/refs/heads/main) ，解压后打开 index.html 在本地浏览器中操作
+
+方法3 ： Clone 本项目，打开 index.html 在本地浏览器中操作
+
+### 部署到云平台（CNB / CodeSpace 等）
+
+#### CNB：
+[CNB](https://cnb.cool/) 平台提供每月免费1600核时的云开发环境时长，足够每天使用8小时6核心12G内存的VibeSpace
+部署方法为：在CNB平台新建一个仓库，将生成的Dockerfile，entrypoint.sh，.cnb.yml 上传到仓库根目录，点击云原生开发即可，CNB平台暂不支持`environment`
+![CNB部署仓库示意](assets/img/readme-doc-cnb-1.png) 
+### 部署到自有机器
 
 ```bash
 # 解压并执行部署脚本
@@ -58,14 +75,14 @@ docker exec -it devbox bash   # 进入容器
 
 | 选项 | 说明 |
 |------|------|
-| 中国大陆 | 自动配置 DNS、APT（北大镜像）、npm（npmmirror）、pip（清华）、Go（goproxy.cn）、GitHub（gh-proxy）|
+| 中国大陆 | 自动配置 DNS、APT（北大镜像）、npm（npmmirror）、pip（清华）、Go（goproxy.cn）、GitHub（gh-proxy）、CodeServer镜像源下载|
 | 国际 | 使用官方源 |
 
 ### 步骤 2：Code-Server
 
-- 启用后可通过浏览器访问 VS Code（端口 8080）
-- 12 个预置扩展可选，支持自定义扩展 ID
-- 配置 SSH root 密码和 SSH 密钥对
+- 启用后可通过浏览器访问 VS Code（默认端口 8080）
+- 12 个常用预置扩展可选，支持自定义扩展
+- 配置 SSH root 密码和 SSH 密钥对，通过SSH连接到容器开发以及使用git
 
 ### 步骤 3：编程语言
 
@@ -74,7 +91,7 @@ docker exec -it devbox bash   # 进入容器
 - **Go** — 官方二进制包安装，附带 gopls / dlv / staticcheck
 - **Node.js** — NodeSource 安装，附带 TypeScript / ts-node
 - **Python** — 系统版本或通过 deadsnakes PPA 指定版本，可选 venv
-- **Rust** — rustup 安装最新稳定版
+- **Rust** — 通过rustup 安装最新稳定版
 - **Java** — OpenJDK，支持 8 / 11 / 17 / 21
 - **C / C++** — GCC / G++，支持指定编译器版本
 
@@ -90,7 +107,7 @@ docker exec -it devbox bash   # 进入容器
 ### 步骤 5：其他工具
 
 - **Cloudflare Tunnel** — 内网穿透（通过环境变量传入 Token）
-- **Vibe 快捷命令** — 自定义 `vibe` 别名
+- **Vibe 快捷命令** — 自定义 `vibe` 别名，一键进入AI工具的特权模式，在VibeSpace中无需担心AI工具损坏系统
 - **数据持久化** — Docker 卷挂载 或 目录挂载
 
 ### 步骤 6：自定义层
@@ -112,7 +129,7 @@ docker exec -it devbox bash   # 进入容器
 ## 项目结构
 
 ```
-├── index.html                 # 主页面（6 步向导 UI）
+├── index.html                 # 主页面（向导 UI）
 ├── css/style.css              # 暗色主题样式
 ├── js/
 │   ├── data/
@@ -138,6 +155,13 @@ docker exec -it devbox bash   # 进入容器
 - [JSZip](https://stuk.github.io/jszip/) — 客户端 ZIP 生成
 
 纯静态页面，无需构建工具，无后端依赖。
+
+## 开发计划
+- 提供更多AI工具如Codex，Gemini CLI的预设配置
+- 支持部署到HuggingFace，魔搭创空间并支持数据持久化
+- 预设更多语法的开发工具链
+- 增加前后端集成版本，彻底的一键部署
+- 为本项目制作Skill，通过AI对话，快速部署
 
 ## License
 
