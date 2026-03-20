@@ -193,6 +193,100 @@ function generateDockerfile(config) {
     }
   }
 
+  // --- 层6b: Claude Code 配置（MCP + 工作流 + 输出风格模板）---
+  if (config.aiTools.includes('claude-code')) {
+    const claudeCmds = [];
+
+    // Claude Code settings.json（遥测禁用 + CCLine statusLine）
+    const hasCcline = config.aiTools.includes('ccline');
+    const hasTelemetryDisable = config.claudeDisableTelemetry;
+    if (hasCcline || hasTelemetryDisable) {
+      claudeCmds.push('mkdir -p ~/.claude');
+      const settings = {};
+      if (hasCcline) {
+        settings.statusLine = { type: 'command', command: 'ccline', padding: 0 };
+      }
+      if (hasTelemetryDisable) {
+        settings.env = {
+          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
+          DISABLE_AUTOUPDATER: '1',
+        };
+      }
+      const settingsJson = JSON.stringify(settings);
+      // 使用 printf 写入，避免 heredoc 在 RUN && 链中断链
+      const escaped = settingsJson.replace(/\\/g, '\\\\').replace(/'/g, "'\\''");
+      claudeCmds.push(`printf '%s' '${escaped}' > ~/.claude/settings.json`);
+    }
+
+    // 输出样式配置（必须在 settings.json 写入之后，claude config set 会智能合并）
+    const outputStyle = config.claudeOutputStyle;
+    if (outputStyle) {
+      const style = DEFAULTS.claudeOutputStyles.find(s => s.id === outputStyle);
+      if (style) {
+        claudeCmds.push('mkdir -p ~/.claude/output-styles');
+        if (style.isCustom) {
+          const ghProxy = isChina ? DEFAULTS.chinaMirrors.ghProxy : '';
+          const styleUrl = `${ghProxy}https://raw.githubusercontent.com/SaladDay/zcf/main/templates/common/output-styles/zh-CN/${style.id}.md`;
+          claudeCmds.push(`(curl -sSL "${styleUrl}" -o ~/.claude/output-styles/${style.id}.md 2>/dev/null || true)`);
+        }
+        claudeCmds.push(`(claude config set outputStyle "${outputStyle}" -g 2>/dev/null || true)`);
+      }
+    }
+
+    // MCP Servers
+    const mcpServers = (config.claudeMcpServers || []).filter(s => s.name && s.json);
+    mcpServers.forEach(mcp => {
+      const safeName = mcp.name.replace(/'/g, "'\\''");
+      const safeJson = mcp.json.replace(/'/g, "'\\''");
+      claudeCmds.push(`(claude mcp add-json -s user '${safeName}' '${safeJson}' || true)`);
+    });
+
+    // 工作流安装
+    const workflows = config.claudeWorkflows || [];
+    if (workflows.includes('zcf')) {
+      claudeCmds.push('mkdir -p ~/.claude/commands/zcf');
+      claudeCmds.push('mkdir -p ~/.claude/agents/zcf');
+
+      const ghProxy = isChina ? DEFAULTS.chinaMirrors.ghProxy : '';
+      const baseUrl = `${ghProxy}https://raw.githubusercontent.com/UfoMiao/zcf/main/templates`;
+
+      const zcfModules = [
+        { commands: ['init-project.md'], agents: ['init-architect.md', 'get-current-datetime.md'], category: 'common' },
+        { commands: ['workflow.md'], agents: [], category: 'sixStep' },
+        { commands: ['feat.md'], agents: ['planner.md', 'ui-ux-designer.md'], category: 'plan' },
+        { commands: ['git-commit.md', 'git-worktree.md', 'git-rollback.md', 'git-cleanBranches.md'], agents: [], category: 'git' },
+        { commands: ['bmad-init.md'], agents: [], category: 'bmad' },
+      ];
+
+      zcfModules.forEach(mod => {
+        mod.commands.forEach(cmd => {
+          let cmdUrl;
+          if (mod.category === 'git') {
+            cmdUrl = `${baseUrl}/common/workflow/git/zh-CN/${cmd}`;
+          } else if (mod.category === 'sixStep') {
+            cmdUrl = `${baseUrl}/common/workflow/sixStep/zh-CN/${cmd}`;
+          } else {
+            cmdUrl = `${baseUrl}/claude-code/zh-CN/workflow/${mod.category}/commands/${cmd}`;
+          }
+          claudeCmds.push(`(curl -sSL "${cmdUrl}" -o ~/.claude/commands/zcf/${cmd} 2>/dev/null || true)`);
+        });
+        if (mod.agents.length > 0) {
+          claudeCmds.push(`mkdir -p ~/.claude/agents/zcf/${mod.category}`);
+          mod.agents.forEach(agent => {
+            const agentUrl = `${baseUrl}/claude-code/zh-CN/workflow/${mod.category}/agents/${agent}`;
+            claudeCmds.push(`(curl -sSL "${agentUrl}" -o ~/.claude/agents/zcf/${mod.category}/${agent} 2>/dev/null || true)`);
+          });
+        }
+      });
+    }
+
+    if (claudeCmds.length) {
+      lines.push('# 层6b: Claude Code 配置');
+      lines.push('RUN ' + claudeCmds.join(' \\\n    && '));
+      lines.push('');
+    }
+  }
+
   // --- 自定义层 (插入于层6与层7之间) ---
   if (config.customDockerfile && config.customDockerfile.trim()) {
     lines.push('# 自定义层');
