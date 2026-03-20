@@ -158,6 +158,7 @@ docker exec -it devbox bash   # 进入容器
 
 ## 开发计划
 - 提供更多AI工具如Codex，Gemini CLI的预设配置
+- 提供终端工具，在终端中使用VibeSpace
 - 支持部署到HuggingFace，魔搭创空间并支持数据持久化
 - 预设更多语法的开发工具链
 - 增加前后端集成版本，彻底的一键部署
