@@ -36,7 +36,7 @@
       <div class="flex items-center gap-3">
         <span class="text-2xl">🚀</span>
         <div>
-          <h1 class="text-lg font-bold text-white">DIY Vibe Space</h1>
+          <h1 class="text-lg font-bold text-white">Vibe Space</h1>
           <p class="text-xs text-gray-500">容器化开发环境生成器</p>
         </div>
       </div>
@@ -146,10 +146,10 @@
           <div class="bg-blue-950/30 border border-blue-800/50 rounded-lg p-4">
             <h4 class="text-sm font-medium text-blue-400 mb-2">将自动配置以下镜像源</h4>
             <div class="grid grid-cols-2 gap-2 text-xs text-blue-300">
-              <div class="badge badge-blue">DNS: 114 / 腾讯 / CF</div>
-              <div class="badge badge-blue">APT: 北大镜像</div>
+              <div class="badge badge-blue">DNS: 114 / 腾讯 / Cloudlfare</div>
+              <div class="badge badge-blue">APT: 北京大学镜像</div>
               <div class="badge badge-blue">npm: npmmirror</div>
-              <div class="badge badge-blue">pip: 清华镜像</div>
+              <div class="badge badge-blue">pip: 清华大学镜像</div>
               <div class="badge badge-blue">Go: goproxy.cn</div>
               <div class="badge badge-blue">GitHub: gh-proxy</div>
             </div>
@@ -255,10 +255,10 @@
           </div>
 
           <!-- 自定义扩展 -->
-          <h3 class="text-sm font-medium text-gray-300 mb-2">自定义扩展 ID</h3>
+          <h3 class="text-sm font-medium text-gray-300 mb-2">安装自定义CodeServer插件</h3>
           <textarea
             x-model="customExtensions"
-            placeholder="每行一个扩展 ID，例如：&#10;publisher.extension-name"
+            placeholder="每行一个CodeServer插件（扩展） ID，例如 GitHub.vscode-pull-request-github &#10;请注意：CodeServer与VSCode的扩展商店来源不同，部分插件CodeServer官方插件源中不存在，请确保输入的是CodeServer的扩展ID，可以通过替换插件源安装VSCode扩展商店的插件，由于版权和法律问题本项目不提供"
             class="w-full max-w-2xl bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm text-gray-300 placeholder-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-y"
             rows="3"
           ></textarea>
