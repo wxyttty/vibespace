@@ -27,6 +27,17 @@ function generateDockerfile(config) {
     envVars.push(`GOLANG_VERSION=${goVer}`, 'GOPATH=/root/go');
     if (isChina) envVars.push(`GOPROXY=${mirrors.goProxy}`);
   }
+  // Java 双版本的环境变量
+  if (config.languages.includes('java')) {
+    const lspVer = config.javaLspVersion || '21-openjdk';
+    const projVer = config.javaProjectVersion || '17-kona';
+    // 标准化版本号到 Java 主版本（用于 JAVA_HOME 路径）
+    const lspMain = lspVer === '21-openjdk' ? '21' : lspVer === '17-kona' ? '17' : '11';
+    const projMain = projVer === '17-kona' ? '17' : projVer === '21-openjdk' ? '21' : '11';
+    const lspPath = lspVer.includes('kona') ? '/opt/java/kona' : `/usr/lib/jvm/java-${lspMain}-openjdk-amd64`;
+    const projPath = projVer.includes('kona') ? '/opt/java/kona' : `/usr/lib/jvm/java-${projMain}-openjdk-amd64`;
+    envVars.push(`JAVA_HOME=${lspPath}`, `PROJECT_JAVA_HOME=${projPath}`);
+  }
   const pathParts = ['$PATH'];
   if (config.languages.includes('go')) pathParts.push('/usr/local/go/bin', '/root/go/bin');
   pathParts.push('/root/.local/bin');
@@ -47,10 +58,23 @@ function generateDockerfile(config) {
     if (!lang) return;
     // 先添加语言定义中的基础 apt 包（make, build-essential, cmake 等）
     lang.aptPkgs.forEach(p => aptPkgs.add(p));
-    // Java: 根据版本选择 openjdk 包名
+    // Java: 改为双版本安装
     if (langId === 'java') {
-      const javaVer = config.languageVersions.java || '21';
-      aptPkgs.add(`openjdk-${javaVer}-jdk`);
+      const lspVer = config.javaLspVersion || '21-openjdk';
+      const projVer = config.javaProjectVersion || '17-kona';
+      // LSP JDK（通常是 21-openjdk，走 apt）
+      if (lspVer === '21-openjdk') {
+        aptPkgs.add('openjdk-21-jdk');
+      } else if (lspVer.startsWith('17')) {
+        aptPkgs.add('openjdk-17-jdk');
+      }
+      // Project JDK - 如果不是 kona，也走 apt
+      if (!projVer.includes('kona') && projVer.startsWith('17')) {
+        aptPkgs.add('openjdk-17-jdk');
+      } else if (!projVer.includes('kona') && projVer === '21-openjdk') {
+        aptPkgs.add('openjdk-21-jdk');
+      }
+      // 如果是 kona，需要额外安装（见 layer1 后的特殊处理）
     }
     // C: 根据版本选择 gcc 包名
     if (langId === 'c') {
@@ -95,6 +119,19 @@ function generateDockerfile(config) {
 
   // --- 层2: 语言运行时 ---
   const runtime = [];
+  // Java: 如果使用 Kona JDK，需要从源安装（二进制包下载）
+  if (config.languages.includes('java')) {
+    const projVer = config.javaProjectVersion || '17-kona';
+    if (projVer.includes('kona')) {
+      // 腾讯 Kona JDK 17 从官方源安装
+      const konaVer = '17.0.1';  // 或根据需要调整
+      runtime.push(`mkdir -p /opt/java && cd /opt/java`);
+      runtime.push(`wget -q https://github.com/Tencent/OpenJDK-Kona/releases/download/kona${konaVer}/Kona_JDK_${konaVer}_x64_linux.tar.gz`);
+      runtime.push(`tar -xzf Kona_JDK_${konaVer}_x64_linux.tar.gz && mv Kona /opt/java/kona && rm -f *.tar.gz`);
+      runtime.push(`update-alternatives --install /usr/bin/java java /opt/java/kona/bin/java 1`);
+      runtime.push(`update-alternatives --install /usr/bin/javac javac /opt/java/kona/bin/javac 1`);
+    }
+  }
   if (config.languages.includes('go')) {
     const goUrl = isChina
       ? URLS.languages.go.downloadChina('${GOLANG_VERSION}')
@@ -141,6 +178,23 @@ function generateDockerfile(config) {
     lines.push('# 层4: 语言开发工具');
     lines.push('RUN ' + devTools.join(' \\\n    && '));
     lines.push('');
+  }
+
+  // --- 层4.5: LSP 服务器安装 ---
+  if (config.lspServers && config.lspServers.length) {
+    const lspCmds = [];
+    config.lspServers.forEach(lspId => {
+      const lsp = DEFAULTS.lspServers.find(l => l.id === lspId);
+      if (lsp && lsp.npmPkg) {
+        lspCmds.push(`npm install -g ${lsp.npmPkg}`);
+      }
+    });
+    if (lspCmds.length) {
+      lspCmds.push('npm cache clean --force');
+      lines.push('# 层4.5: LSP 服务器');
+      lines.push('RUN ' + lspCmds.join(' \\\n    && '));
+      lines.push('');
+    }
   }
 
   // --- 层5: code-server + 扩展 ---

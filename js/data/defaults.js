@@ -56,8 +56,11 @@ const DEFAULTS = {
     {
       id: 'java', label: 'Java', icon: '☕',
       hasVersion: true, defaultVersion: '21',
-      versions: ['21', '17', '11', '8'],
-      installNote: '通过 apt 安装 OpenJDK，请确认基础镜像源中包含对应版本',
+      versions: ['21-openjdk', '17-kona'],
+      hasDualJdk: true,
+      lspJdkDefault: '21-openjdk',       // LSP 运行用（通过 apt 安装）
+      projectJdkDefault: '17-kona',      // 项目编译用（腾讯 Kona JDK，从官方源安装）
+      installNote: '支持双 JDK 版本：21-openjdk（LSP）+ 17-kona（腾讯 Kona，项目编译）',
       aptPkgs: [], devTools: [],
     },
     {
@@ -81,6 +84,7 @@ const DEFAULTS = {
   aiTools: [
     { id: 'cc-switch', label: 'CC-Switch', desc: 'ClaudeCode/Codex 提供商 MCP Skils管理工具', hasVersion: false, isScript: true },
     { id: 'claude-code', label: 'Claude Code', desc: 'Anthropic CLI 开发工具', hasVersion: true, defaultVersion: 'latest', npmPkg: '@anthropic-ai/claude-code', hasMcp: true },
+    { id: 'opencode', label: 'OpenCode', desc: 'OpenAI CLI 开发工具 (SDK)', hasVersion: false, npmPkg: '@opencode-ai/sdk' },
     { id: 'ccline', label: 'CCLine', desc: 'Claude Code 状态行工具', hasVersion: false, npmPkg: '@cometix/ccline', requiresTool: 'claude-code' },
   ],
 
@@ -103,6 +107,38 @@ const DEFAULTS = {
     url: URLS.tools.ccSwitch.url,
     mirrorUrl: URLS.withGhProxy(URLS.tools.ccSwitch.url),
   },
+
+  /* LSP Server 配置 */
+  lspServers: [
+    {
+      id: 'jdtls',
+      label: 'Java (JDTLS)',
+      language: 'java',
+      desc: 'Eclipse 官方 Java 语言服务器，需要 JDK 21+',
+      requiresLanguage: 'java',
+      requiresJdk: '21',
+      npmPkg: 'jdtls',
+      checked: true,
+    },
+    {
+      id: 'vtsls',
+      label: 'TypeScript / JavaScript (VTSLS)',
+      language: 'nodejs',
+      desc: '高性能 TypeScript Language Server',
+      requiresLanguage: 'nodejs',
+      npmPkg: 'vtsls',
+      checked: false,
+    },
+    {
+      id: 'vue-language-server',
+      label: 'Vue 3 (Volar)',
+      language: 'nodejs',
+      desc: 'Vue 3 官方语言服务器',
+      requiresLanguage: 'nodejs',
+      npmPkg: '@vue/language-server',
+      checked: false,
+    },
+  ],
 
   /* MCP Server 预设 */
   mcpPresets: [

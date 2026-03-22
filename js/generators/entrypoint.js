@@ -21,6 +21,18 @@ function generateEntrypoint(config) {
   lines.push('cp -an /root-defaults/root/. /root/ 2>/dev/null || true');
   lines.push('');
 
+  // Java 双版本环境变量确认
+  if (config.languages.includes('java')) {
+    lines.push('# --- Java 版本管理 ---');
+    const lspVer = config.javaLspVersion || '21-openjdk';
+    const projVer = config.javaProjectVersion || '17-kona';
+    const lspPath = lspVer.includes('kona') ? '/opt/java/kona' : `/usr/lib/jvm/java-${lspVer.split('-')[0]}-openjdk-amd64`;
+    const projPath = projVer.includes('kona') ? '/opt/java/kona' : `/usr/lib/jvm/java-${projVer.split('-')[0]}-openjdk-amd64`;
+    lines.push(`export JAVA_HOME=${lspPath}`);
+    lines.push(`export PROJECT_JAVA_HOME=${projPath}`);
+    lines.push('');
+  }
+
   // Git
   lines.push('# --- Git ---');
   lines.push('if [ -n "$GIT_USER_NAME" ]; then');

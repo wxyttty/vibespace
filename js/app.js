@@ -25,6 +25,13 @@ function appState() {
     aiTools: [],
     aiToolVersions: {},
     claudeMcpServers: [],  // [{name: 'my-server', json: '{"type":"http","url":"..."}', jsonValid: true}]
+    
+    /* Java 双版本管理 */
+    javaLspVersion: '21-openjdk',
+    javaProjectVersion: '17-kona',
+    
+    /* LSP 服务器选择 */
+    lspServers: [],
 
     /* Claude Code 工作流和输出样式 */
     claudeWorkflows: [],      // 已选中的工作流 ID 数组
@@ -60,6 +67,7 @@ function appState() {
         'rootPassword', 'csPassword', 'sshPrivateKey', 'sshPublicKey',
         'cfTunnel', 'cfToken', 'vibeCommand', 'vibeCommandText',
         'volumeMode', 'customDockerfile',
+        'javaLspVersion', 'javaProjectVersion', 'lspServers',
       ];
       watched.forEach(key => this.$watch(key, () => this.generate()));
     },
@@ -212,6 +220,9 @@ function appState() {
       this.vibeCommandText = p.vibeCommandText;
       this.volumeMode = p.volumeMode || 'named';
       this.customDockerfile = p.customDockerfile || '';
+      this.javaLspVersion = p.javaLspVersion || '21-openjdk';
+      this.javaProjectVersion = p.javaProjectVersion || '17-kona';
+      this.lspServers = p.lspServers ? [...p.lspServers] : [];
       this.generate();
     },
 
@@ -242,6 +253,9 @@ function appState() {
         volumeMode: this.volumeMode,
         customDockerfile: this.customDockerfile,
         needsNodejs: this.needsNodejs(),
+        javaLspVersion: this.javaLspVersion,
+        javaProjectVersion: this.javaProjectVersion,
+        lspServers: this.lspServers,
       };
     },
 
